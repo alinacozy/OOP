@@ -1,10 +1,6 @@
 package functions;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
-public class FunctionPoint implements java.io.Externalizable{
+public class FunctionPoint implements java.io.Serializable, Cloneable{
     private double x;
     private double y;
 
@@ -37,15 +33,32 @@ public class FunctionPoint implements java.io.Externalizable{
         y=newY;
     }
 
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeObject(x);
-        out.writeObject(y);
+    public String toString(){
+        return "("+x+"; "+y+")";
     }
 
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        x = (double) in.readObject();
-        y = (double) in.readObject();
+    public boolean equals(Object o){
+        FunctionPoint oPoint=(FunctionPoint) o; //создаем объект класса точки, чтобы обратиться к o.x
+        return (o.getClass()==getClass()) && (x==oPoint.x && y==oPoint.y);
+    }
+
+    public int hashCode(){
+        long longX=Double.doubleToLongBits(x);
+        long longY=Double.doubleToLongBits(y);
+        int x1=(int)(longX)&(0x0000ffff); //получим младшие биты
+        int x2=(int)(longX>>32); //получим старшие биты
+        int y1=(int)(longY)&(0x0000ffff);
+        int y2=(int)(longY>>32);
+        return x1^x2^y1^y2;
+    }
+
+    public Object clone(){
+        Object result=null;
+        try{
+            result=super.clone();
+        } catch (CloneNotSupportedException ex){
+            System.out.println(ex.getMessage());
+        }
+        return result;
     }
 }

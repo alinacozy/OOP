@@ -1,6 +1,6 @@
 package functions;
 
-public class LinkedListTabulatedFunction implements TabulatedFunction, java.io.Serializable {
+public class LinkedListTabulatedFunction implements TabulatedFunction, java.io.Serializable, Cloneable {
     private class FunctionNode {
         public FunctionPoint data;
         public FunctionNode prev;
@@ -13,7 +13,7 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, java.io.S
         }
 
         public FunctionNode(FunctionPoint point) {
-            data = point;
+            data = (FunctionPoint) point.clone();
             prev = null;
             next = null;
         }
@@ -92,6 +92,14 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, java.io.S
         nodeToDelete.next.prev=nodeToDelete.prev;
         pCount--;
         return nodeToDelete;
+    }
+
+    public LinkedListTabulatedFunction(){ //создание пустого списка
+        head=new FunctionNode();
+        head.prev=head.next=head;
+        currentNode=head;
+        currentIndex=0;
+        pCount=0;
     }
 
     public LinkedListTabulatedFunction(double leftX, double rightX, int pointsCount) throws IllegalArgumentException{
@@ -256,5 +264,89 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, java.io.S
         //если мы вышли из цикла, значит наша новая точка больше всех остальных точек -> вставляем в хвост
         FunctionNode newNode=addNodeToTail();
         newNode.data=point;
+    }
+
+    public String toString(){
+        StringBuilder str = new StringBuilder("{"); //инициализируем буфер первой фигурной скобкой
+        currentNode=head.next;
+        currentIndex=0;
+        do{
+            str.append(currentNode.data.toString());
+            str.append(",");
+            currentNode=currentNode.next;
+            ++currentIndex;
+        }while(currentNode!=head.next);
+        currentIndex=0;
+        str.setCharAt(str.length()-1, '}'); //заменяем нашу последнюю запятую на фигурную скобочку
+        return str.toString();
+    }
+
+    public boolean equals(Object o){
+        if (!(o instanceof TabulatedFunction)) return false; //если o не реализует TabulatedFunction
+        if (o.getClass() == getClass()) { //если o - LinkedListTabulatedFunction
+            LinkedListTabulatedFunction oList=(LinkedListTabulatedFunction) o;
+            if (oList.pCount!= pCount) return false; //сравниваем количество точек
+            currentNode=head.next;
+            oList.currentNode=oList.head.next;
+            currentIndex=oList.currentIndex=0;
+            do{
+                if(!currentNode.data.equals(oList.currentNode.data)) return false; //если находим несовпадение точки, возвращаем false
+                // увеличение индексов:
+                currentNode=currentNode.next;
+                oList.currentNode=oList.currentNode.next;
+                oList.currentIndex=++currentIndex;
+            } while(currentNode!=head.next);
+            oList.currentIndex=currentIndex=0;
+
+            return true;
+        }
+        if (((TabulatedFunction) o).getPointsCount() != pCount) return false; //сравниваем количество точек
+        currentNode=head.next;
+        currentIndex=0;
+        do{
+            if(!currentNode.data.equals(((TabulatedFunction) o).getPoint(currentIndex))) return false; //если находим несовпадение точки, возвращаем false
+            // увеличение индекса:
+            currentNode=currentNode.next;
+            ++currentIndex;
+        } while(currentNode!=head.next);
+        currentIndex=0;
+        return true; //если мы дошли до сюда, то все точки равны -> функции равны
+    }
+
+    public int hashCode(){
+        int result=pCount;
+        currentNode=head.next;
+        currentIndex=0;
+        do{
+            result^=currentNode.data.hashCode();
+            currentNode=currentNode.next;
+            ++currentIndex;
+        }while(currentNode!=head.next);
+        currentIndex=0;
+        return result;
+    }
+
+    public Object clone(){
+        LinkedListTabulatedFunction result=new LinkedListTabulatedFunction();
+        currentNode=head.next;
+        currentIndex=0;
+        do{
+            FunctionNode newNode=new FunctionNode(currentNode.data); //создаем новый узел
+            result.currentNode.next=newNode;
+            newNode.prev=result.currentNode;
+
+            //увеличение индексов:
+            currentNode=currentNode.next;
+            result.currentNode=newNode;
+            result.currentIndex=++currentIndex-1;
+
+        }while(currentNode!=head.next);
+
+        currentIndex=0; //сбрасываем текущий индекс исходного списка
+
+        result.currentNode.next=result.head.next; //зацикливаем список
+        result.head.next.prev=result.currentNode;
+
+        return result;
     }
 }
