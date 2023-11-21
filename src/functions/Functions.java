@@ -30,4 +30,22 @@ public class Functions {
         return new Composition(f1, f2);
     }
 
+    public static double integral(Function f, double leftX, double rightX, double step) throws IllegalArgumentException{
+        if (leftX<f.getLeftDomainBorder() || leftX>f.getRightDomainBorder() || rightX <f.getLeftDomainBorder() || rightX>f.getRightDomainBorder()){
+            throw new IllegalArgumentException("The integration interval goes beyond the boundaries of the function definition domain");
+        }
+        double result=0;
+        //значения точек в вершинах трапеции:
+        double leftY=f.getFunctionValue(leftX);
+        double rightY=f.getFunctionValue(leftX+step);
+        while(leftX<rightX){
+            result+=step*(leftY+rightY)/2;
+            leftX+=step;
+            leftY=rightY;
+            rightY=f.getFunctionValue(leftX+step);
+        }
+        rightY=f.getFunctionValue(rightX);
+        result+=(rightX-leftX)*(leftY+rightY)/2;
+        return result;
+    }
 }

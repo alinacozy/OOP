@@ -1,84 +1,84 @@
 import functions.*;
+import functions.basic.Exp;
+import functions.basic.Log;
+import functions.meta.Sum;
+import threads.*;
+
 
 public class Main {
+    public static void nonThread() {
+        Task task = new Task();
+        task.countOfTasks = 100;
+        for (int i = 0; i < task.countOfTasks; ++i) {
+            double base = Math.random() * 9 + 1;
+            task.f = new Log(base);
+            task.leftX = Math.random() * 100;
+            task.rightX = Math.random() * 100 + 100;
+            task.step = Math.random();
+            System.out.println("Source " + task.leftX + ' ' + task.rightX + ' ' + task.step);
+            double integral = Functions.integral(task.f, task.leftX, task.rightX, task.step);
+            System.out.println("Result " + task.leftX + ' ' + task.rightX + ' ' + task.step + ' ' + integral);
+        }
+    }
+
+    public static void simpleThreads(){
+        Task task=new Task();
+        task.countOfTasks=100;
+        SimpleGenerator generator=new SimpleGenerator(task);
+        Thread generatorThread=new Thread(generator);
+        SimpleIntegrator integrator=new SimpleIntegrator(task);
+        Thread integratorThread=new Thread(integrator);
+        generatorThread.start();
+        integratorThread.start();
+    }
+
+    public static void complicatedThreads() throws InterruptedException {
+        Task task=new Task();
+        task.countOfTasks=1000;
+        Semaphore semaphore=new Semaphore();
+        Generator generator=new Generator(task, semaphore);
+        Thread generatorThread=new Thread(generator);
+        Integrator integrator=new Integrator(task, semaphore);
+        Thread integratorThread=new Thread(integrator);
+        generatorThread.setPriority(Thread.MIN_PRIORITY);
+        integratorThread.setPriority(Thread.MAX_PRIORITY);
+        generatorThread.start();
+        integratorThread.start();
+
+        Thread.currentThread().sleep(50);
+        System.out.println("...Прошло 50 миллисекунд...");
+        generatorThread.interrupt();
+        integratorThread.interrupt();
+    }
+
     public static void main(String[] args) {
-        //инициализация функций
-        double[] valuesLinear={1,2,3,4};
-        double[] valuesQuadratic={1,4,9,16};
+        Function exp = new Exp();
+        double theoretical_integral_exp = Math.exp(1) - 1;
+        double step = 0.1;
+        double integral_exp = Functions.integral(exp, 0, 1, step);
+        while (Math.abs(theoretical_integral_exp - integral_exp) > 1e-7) {
+            step /= 2;
+            integral_exp = Functions.integral(exp, 0, 1, step);
+        }
+        System.out.println("Теоретическое значение интеграла от экспоненты: " + theoretical_integral_exp);
+        System.out.println("Рассчитанное значение интеграла от экпоненты: " + integral_exp);
+        System.out.println("Разница теоретического и рассчитанного значения: " + Math.abs(theoretical_integral_exp - integral_exp));
+        System.out.println("Шаг дискретизации: " + step);
+        System.out.println();
 
-        ArrayTabulatedFunction arrayLinear=new ArrayTabulatedFunction(1,4,valuesLinear);
-        ArrayTabulatedFunction arrayLinear2=new ArrayTabulatedFunction(1,4,valuesLinear);
-        LinkedListTabulatedFunction listLinear=new LinkedListTabulatedFunction(1, 4, valuesLinear);
-        ArrayTabulatedFunction arrayQuadratic=new ArrayTabulatedFunction(1,4,valuesQuadratic);
-        LinkedListTabulatedFunction listQuadratic=new LinkedListTabulatedFunction(1,4,valuesQuadratic);
+//        System.out.println("Проверка работы метода nonThread:");
+//        nonThread();
+//        System.out.println();
 
+//        System.out.println("Проверка работы метода simpleThreads:");
+//        simpleThreads();
 
-        System.out.println("Проверка метода toString():");
-        System.out.println("Строковое представление ArrayTabulatedFunction:");
-        System.out.println(arrayLinear.toString());
-        System.out.println("Строковое представление LinkedListTabulatedFunction:");
-        System.out.println(listLinear.toString());
-        System.out.print('\n');
+        System.out.println("Проверка работы метода complicatedThreads");
+        try {
+            complicatedThreads();
+        } catch (InterruptedException e) { //если прервали основной поток, выбросится это исключение
+            System.err.println("Ошибка! Прерван основной поток программы!");
+        }
 
-
-        System.out.println("Проверка метода equals():");
-        System.out.print("Сравнение одинаковых функций одинакового типа: ");
-        System.out.println(arrayLinear.equals(arrayLinear2));
-        System.out.print("Сравнение одинаковых функций разного типа: ");
-        System.out.println(arrayLinear.equals(listLinear));
-        System.out.print("Сравнение разных функций одинакового типа: ");
-        System.out.println(arrayLinear.equals(arrayQuadratic));
-        System.out.print("Сравнение разных функций разного типа: ");
-        System.out.println(listLinear.equals(arrayQuadratic));
-        System.out.print('\n');
-
-
-        System.out.println("Проверка метода hashCode():");
-        System.out.print("Значение хэш-кода для линейной функции, заданной массивом: ");
-        System.out.println(arrayLinear.hashCode());
-        System.out.print("Значение хэш-кода для копии линейной функции, заданной массивом: ");
-        System.out.println(arrayLinear2.hashCode());
-        System.out.print("Значение хэш-кода для линейной функции, заданной списком: ");
-        System.out.println(listLinear.hashCode());
-        System.out.print("Значение хэш-кода для квадратичной функции, заданной массивом: ");
-        System.out.println(arrayQuadratic.hashCode());
-        System.out.print("Значение хэш-кода для квадратичной функции, заданной списком: ");
-        System.out.println(listQuadratic.hashCode());
-
-        //попробуем незначительно изменить одну из точек квадратичной функции, заданной списком
-        listQuadratic.setPointY(1, 4.003);
-        System.out.print("Значение хэш-кода для измененной квадратичной функции, заданной списком: ");
-        System.out.println(listQuadratic.hashCode());
-        System.out.print('\n');
-
-
-        System.out.println("Проверка клонирования для класса ArrayTabulatedFunction:");
-        ArrayTabulatedFunction clonedArrayLinear=(ArrayTabulatedFunction) arrayLinear.clone();
-        System.out.println("Исходная функция:");
-        System.out.println(arrayLinear.toString());
-        System.out.println("Клонированная функция:");
-        System.out.println(clonedArrayLinear.toString());
-        //изменим значение одной из точек исходной функции
-        arrayLinear.setPointY(1,100);
-        System.out.println("Исходная функция после изменения:");
-        System.out.println(arrayLinear.toString());
-        System.out.println("Клонированная функция после изменения:");
-        System.out.println(clonedArrayLinear.toString());
-        System.out.print('\n');
-
-
-        System.out.println("Проверка клонирования для класса LinkedListTabulatedFunction:");
-        LinkedListTabulatedFunction clonedListLinear=(LinkedListTabulatedFunction) listLinear.clone();
-        System.out.println("Исходная функция:");
-        System.out.println(listLinear.toString());
-        System.out.println("Клонированная функция:");
-        System.out.println(clonedListLinear.toString());
-        //изменим значение одной из точек исходной функции
-        listLinear.setPointY(2,-80);
-        System.out.println("Исходная функция после изменения:");
-        System.out.println(listLinear.toString());
-        System.out.println("Клонированная функция после изменения:");
-        System.out.println(clonedListLinear.toString());
-        System.out.print('\n');
     }
 }
