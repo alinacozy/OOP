@@ -3,11 +3,32 @@ package functions;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class ArrayTabulatedFunction implements TabulatedFunction, java.io.Serializable, Cloneable {
 
     private FunctionPoint[] points;
     private int pCount; //количество точек функции
+
+    public static class ArrayTabulatedFunctionFactory implements TabulatedFunctionFactory{
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointsCount) {
+            return new ArrayTabulatedFunction(leftX, rightX, pointsCount);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) {
+            return new ArrayTabulatedFunction(leftX, rightX, values);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(FunctionPoint[] values) {
+            return new ArrayTabulatedFunction(values);
+        }
+    }
+
 
     public ArrayTabulatedFunction() {
     }
@@ -215,5 +236,29 @@ public class ArrayTabulatedFunction implements TabulatedFunction, java.io.Serial
             System.out.println(ex.getMessage());
         }
         return result;
+    }
+
+    @Override
+    public Iterator<FunctionPoint> iterator() {
+        return new Iterator<FunctionPoint>() {
+            private int index=0;
+            @Override
+            public boolean hasNext() {
+                return index<pCount;
+            }
+
+            @Override
+            public FunctionPoint next() throws NoSuchElementException{
+                if (!hasNext()){
+                    throw new NoSuchElementException();
+                }
+                return points[index++]; //возвращаем элемент массива по текущему индексу, затем индекс увеличивается на 1
+            }
+
+            @Override
+            public void remove() throws UnsupportedOperationException{
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

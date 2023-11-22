@@ -1,7 +1,8 @@
 import functions.*;
+import functions.basic.Cos;
 import functions.basic.Exp;
 import functions.basic.Log;
-import functions.meta.Sum;
+import functions.basic.Sin;
 import threads.*;
 
 
@@ -52,33 +53,67 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Function exp = new Exp();
-        double theoretical_integral_exp = Math.exp(1) - 1;
-        double step = 0.1;
-        double integral_exp = Functions.integral(exp, 0, 1, step);
-        while (Math.abs(theoretical_integral_exp - integral_exp) > 1e-7) {
-            step /= 2;
-            integral_exp = Functions.integral(exp, 0, 1, step);
-        }
-        System.out.println("Теоретическое значение интеграла от экспоненты: " + theoretical_integral_exp);
-        System.out.println("Рассчитанное значение интеграла от экпоненты: " + integral_exp);
-        System.out.println("Разница теоретического и рассчитанного значения: " + Math.abs(theoretical_integral_exp - integral_exp));
-        System.out.println("Шаг дискретизации: " + step);
+
+        System.out.println("Проверка работы фабрик (задание 2):");
+        Function cosinus = new Cos();
+        TabulatedFunction tabulatedCosinus;
+        tabulatedCosinus=TabulatedFunctions.tabulate(cosinus, 0, Math.PI, 11);
+        System.out.println(tabulatedCosinus.getClass());
+        TabulatedFunctions.setTabulatedFunctionFactory(new LinkedListTabulatedFunction.LinkedListTabulatedFunctionFactory());
+        tabulatedCosinus=TabulatedFunctions.tabulate(cosinus, 0, Math.PI, 11);
+        System.out.println(tabulatedCosinus.getClass());
+        TabulatedFunctions.setTabulatedFunctionFactory(new ArrayTabulatedFunction.ArrayTabulatedFunctionFactory());
+        tabulatedCosinus=TabulatedFunctions.tabulate(cosinus,0, Math.PI, 11);
+        System.out.println(tabulatedCosinus.getClass());
         System.out.println();
 
-//        System.out.println("Проверка работы метода nonThread:");
-//        nonThread();
-//        System.out.println();
-
-//        System.out.println("Проверка работы метода simpleThreads:");
-//        simpleThreads();
-
-        System.out.println("Проверка работы метода complicatedThreads");
-        try {
-            complicatedThreads();
-        } catch (InterruptedException e) { //если прервали основной поток, выбросится это исключение
-            System.err.println("Ошибка! Прерван основной поток программы!");
+        System.out.println("Проверка работы итераторов классов (задание 1):");
+        Function exp= new Exp();
+        //создаем ArrayTabulatedFunction с помощью factory
+        TabulatedFunctions.setTabulatedFunctionFactory(new ArrayTabulatedFunction.ArrayTabulatedFunctionFactory());
+        TabulatedFunction f = TabulatedFunctions.tabulate(exp, 0, 10, 11);
+        System.out.println("Для ArrayTabulatedFunction:");
+        for (FunctionPoint p: f){
+            System.out.println(p);
         }
+        System.out.println();
+        //создаем LinkedListTabulatedFunction с помощью factory
+        TabulatedFunctions.setTabulatedFunctionFactory(new LinkedListTabulatedFunction.LinkedListTabulatedFunctionFactory());
+        f = TabulatedFunctions.tabulate(exp, 0, 10, 11);
+        System.out.println("Для LinkedListTabulatedFunction:");
+        for (FunctionPoint p: f){
+            System.out.println(p);
+        }
+        System.out.println();
+
+        System.out.println("Проверка работы рефлексивных методов (задание 3):");
+        //создаем табулированную функцию класса ArrayTabulatedFunction
+        TabulatedFunction function;
+        function = TabulatedFunctions.createTabulatedFunction(0, 10, 3, ArrayTabulatedFunction.class);
+        System.out.println(function.getClass());
+        System.out.println(function);
+
+        //создаем табулированную функцию со списком значений типа ArrayTabulatedFunction
+        function = TabulatedFunctions.createTabulatedFunction(
+                0, 10, new double[] {0, 10}, ArrayTabulatedFunction.class);
+        System.out.println(function.getClass());
+        System.out.println(function);
+
+        //создаем табулированную функцию массивом FunctionPoint типа LinkedListTabulatedFunction
+        function = TabulatedFunctions.createTabulatedFunction(
+                new FunctionPoint[] {
+                        new FunctionPoint(0, 0),
+                        new FunctionPoint(10, 10)
+                },
+                LinkedListTabulatedFunction.class
+        );
+        System.out.println(function.getClass());
+        System.out.println(function);
+
+        //создаем функцию методом tabulate типа LinkedListTabulatedFunction
+        function = TabulatedFunctions.tabulate(new Sin(), 0, Math.PI, 11, LinkedListTabulatedFunction.class);
+        System.out.println(function.getClass());
+        System.out.println(function);
 
     }
 }

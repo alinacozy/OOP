@@ -1,6 +1,10 @@
 package functions;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 public class LinkedListTabulatedFunction implements TabulatedFunction, java.io.Serializable, Cloneable {
+
     private class FunctionNode {
         public FunctionPoint data;
         public FunctionNode prev;
@@ -23,6 +27,24 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, java.io.S
     private int pCount;
     private int currentIndex;
     private FunctionNode currentNode;
+
+    public static class LinkedListTabulatedFunctionFactory implements TabulatedFunctionFactory{
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointsCount) {
+            return new LinkedListTabulatedFunction(leftX, rightX, pointsCount);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) {
+            return new LinkedListTabulatedFunction(leftX, rightX, values);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(FunctionPoint[] values) {
+            return new LinkedListTabulatedFunction(values);
+        }
+    }
 
     private FunctionNode getNodeByIndex(int index){
         index=index% pCount; // так как список циклический, нам могут передать индекс, больший размера
@@ -348,5 +370,36 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, java.io.S
         result.head.next.prev=result.currentNode;
 
         return result;
+    }
+
+    @Override
+    public Iterator<FunctionPoint> iterator() {
+
+
+        return new Iterator<FunctionPoint>() {
+            private FunctionNode iteratorNode=head;
+
+            @Override
+            public boolean hasNext() {
+                return (iteratorNode.next!=head.next || (iteratorNode==head && iteratorNode.next!=head));
+                 //возвращаем true, если следующий элемент не совпадает с первым (head.next)
+                // ИЛИ если наш элемент - голова и список не пуст (голова не ссылается на саму себя)
+            }
+
+            @Override
+            public FunctionPoint next() throws NoSuchElementException{
+                if (!hasNext()){
+                    throw new NoSuchElementException();
+                }
+                iteratorNode=iteratorNode.next;
+                return iteratorNode.data;
+            }
+
+            @Override
+            public void remove() throws UnsupportedOperationException{
+                throw new UnsupportedOperationException();
+            }
+
+        };
     }
 }
